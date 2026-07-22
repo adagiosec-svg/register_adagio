@@ -4,8 +4,10 @@ import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { UserStatus } from "@prisma/client";
 import { checkLoginRateLimit, recordFailedLogin } from "./rate-limit";
+import { authConfig } from "@/auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -64,30 +66,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = (user as any).role;
-        token.grade = (user as any).grade;
-        token.username = (user as any).username;
-        token.mateId = (user as any).mateId;
-        token.status = (user as any).status;
-      }
-      return token;
-    },
-    session({ session, token }) {
-      session.user.id = token.id as string;
-      session.user.role = token.role as string;
-      session.user.grade = token.grade as string | null;
-      session.user.username = token.username as string;
-      session.user.mateId = token.mateId as string | null;
-      session.user.status = token.status as string;
-      return session;
-    },
-  },
-  pages: {
-    signIn: "/login",
-  },
-  session: { strategy: "jwt" },
 });

@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pandoc -t markdown \"C:\\\\Users\\\\e1023\\\\Downloads\\\\adagio\\\\수강신청_시스템_PRD_v2.1.docx\")",
+      "PowerShell(pandoc -t markdown \"C:\\\\Users\\\\e1023\\\\Downloads\\\\adagio\\\\������û_�ý���_PRD_v2.1.docx\")",
+      "Bash(python3 -c \"import docx; print\\('python-docx available'\\)\")",
+      "Bash(mkdir -p \"/c/Users/e1023/AppData/Local/Temp/claude/C--Users-e1023-workspace-adagio/5a78e412-f407-4535-9ac9-21aa0f4b3ddb/scratchpad/prd_unzip\")",
+      "Bash(unzip -o -q \"C:\\\\Users\\\\e1023\\\\Downloads\\\\adagio\\\\수강신청_시스템_PRD_v2.1.docx\" -d \"/c/Users/e1023/AppData/Local/Temp/claude/C--Users-e1023-workspace-adagio/5a78e412-f407-4535-9ac9-21aa0f4b3ddb/scratchpad/prd_unzip\")",
+      "Read(//c/Users/e1023/AppData/Local/Temp/claude/C--Users-e1023-workspace-adagio/5a78e412-f407-4535-9ac9-21aa0f4b3ddb/scratchpad/prd_unzip/**)",
+      "Bash(sed -E 's/<w:t[^>]*>//; s/<\\\\/w:t>//')",
+      "Read(//c/Users/e1023/AppData/Local/Temp/claude/C--Users-e1023-workspace-adagio/5a78e412-f407-4535-9ac9-21aa0f4b3ddb/scratchpad/**)",
+      "Bash(perl -0777 -pe 's/<\\\\/w:p>/\\\\n/g' /c/Users/e1023/AppData/Local/Temp/claude/C--Users-e1023-workspace-adagio/5a78e412-f407-4535-9ac9-21aa0f4b3ddb/scratchpad/prd_unzip/word/document.xml)",
+      "Bash(perl -pe 's/<[^>]+>//g')",
+      "Bash(npm --version)",
+      "PowerShell(Get-Command node -ErrorAction SilentlyContinue; Get-Command npm -ErrorAction SilentlyContinue; \\(Get-Command node -ErrorAction SilentlyContinue\\).Source)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\e1023\\\\workspace\\\\adagio\\\\app\\\\api\\\\admin\\\\special\\\\[id]\")",
+      "Bash(Out-Null)",
+      "Bash(neon init *)",
+      "Bash(npm run *)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\e1023\\\\workspace\\\\adagio\\\\app\\\\api\\\\admin\\\\members\\\\[id]\\\\registrations\")",
+      "Bash(Write-Output \"done\")",
+      "Bash(npx tsc *)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "PowerShell(cd C:\\\\Users\\\\e1023\\\\workspace\\\\adagio; $env:Path = \"C:\\\\Program Files\\\\nodejs;\" + $env:Path; node node_modules\\\\typescript\\\\bin\\\\tsc --noEmit 2>&1 | Select-Object -First 80)",
+      "PowerShell(cd C:\\\\Users\\\\e1023\\\\workspace\\\\adagio; $env:Path = \"C:\\\\Program Files\\\\nodejs;\" + $env:Path; node node_modules\\\\typescript\\\\bin\\\\tsc --noEmit 2>&1 | Select-Object -First 50)",
+      "PowerShell(& \"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"C:\\\\Users\\\\e1023\\\\workspace\\\\adagio\\\\node_modules\\\\.bin\\\\tsc\" --noEmit 2>&1)",
+      "PowerShell(& \"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"C:\\\\Users\\\\e1023\\\\workspace\\\\adagio\\\\node_modules\\\\typescript\\\\bin\\\\tsc\" --noEmit 2>&1)",
+      "PowerShell(& \"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"C:\\\\Users\\\\e1023\\\\workspace\\\\adagio\\\\node_modules\\\\typescript\\\\bin\\\\tsc\" --noEmit 2>&1 | Where-Object { $_ -match \"registrations/route\" })"
+    ]
+  }
+}

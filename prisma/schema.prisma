@@ -1,0 +1,385 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────
+// 사용자
+// ─────────────────────────────────────────────
+model User {
+  id               String   @id @default(cuid())
+  username         String   @unique // 로그인용 자체 ID (포탈 ID 아님)
+  passwordHash     String
+  name             String
+  phoneEncrypted   String   // AES-256-GCM 암호문
+  phoneLast4       String   // 화면 마스킹 표시용 뒤 4자리
+  // 포탈 ID: 평문은 절대 저장하지 않음
+  portalIdHash     String?  @unique // HMAC-SHA256(pepper, portalId) — 중복가입 방지 조회용
+  portalIdEncrypted String? // AES-256-GCM 암호문 — 관리자 승인 화면에서만 복호화
+  mateId           String?  @unique // Studio Mate 사용자 ID. 관리자 승인 시 입력.
+  grade            Grade?             // 정회원 / 준회원. 승인 시 관리자가 선택.
+  status           UserStatus @default(PENDING)
+  role             Role       @default(USER)
+  createdAt        DateTime   @default(now())
+  approvedAt       DateTime?
+  approvedById     String?
+  approvedBy       User?      @relation("ApprovalRelation", fields: [approvedById], references: [id])
+  approvals        User[]     @relation("ApprovalRelation")
+
+  registrations       Registration[]
+  enrollmentHistories EnrollmentHistory[]
+  couponApplications  CouponApplication[]
+  specialRegistrations SpecialRegistration[]
+}
+
+enum UserStatus {
+  PENDING    // 승인 대기
+  ACTIVE     // 활성 (정회원·준회원 공통)
+  DORMANT    // 휴면
+  REJECTED   // 거절됨
+  SUSPENDED  // 정지됨
+}
+
+enum Grade {
+  REGULAR    // 정회원
+  ASSOCIATE  // 준회원
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// ─────────────────────────────────────────────
+// 강사
+// ─────────────────────────────────────────────
+model Instructor {
+  id             String   @id @default(cuid())
+  name           String
+  phone          String?  // AES-256-GCM 암호문 (encryptSensitive)
+  themeColor     String   // 시스템 자동 배정 hex (#f97316 등)
+  subsidyAmount  Int      @default(0) // 월 고정 지원금 (원). 0이면 지원 없음.
+  bankName       String?  // 강사 계좌 은행 (암호화)
+  accountNumber  String?  // 강사 계좌번호 (암호화)
+  accountHolder  String?  // 강사 계좌 예금주 (암호화)
+  memo           String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  courses         Course[]
+  specialCourses  SpecialCourse[]
+  courseHistories InstructorCourseHistory[]
+}
+
+// ─────────────────────────────────────────────
+// 강사 수업 히스토리 (5년 보관)
+// ─────────────────────────────────────────────
+model InstructorCourseHistory {
+  id             String      @id @default(cuid())
+  instructorId   String
+  instructor     Instructor  @relation(fields: [instructorId], references: [id])
+  courseId       String?     // null 가능 (수업 삭제 후에도 이력 보존)
+  courseName     String      // 스냅샷
+  courseType     CourseType
+  daysCount      Int?        // Full/Half 전용: 월 진행 횟수
+  durationHours  Decimal?    // Special 전용: 수업 시간(시간)
+  tuitionFee     Int         // 당시 수강료
+  instructorFee  Int         // 당시 강사료 또는 특별강사료
+  accountInfo    String?     // Special 수업 시 계좌 정보 스냅샷 (암호화, encryptSensitive)
+  sessionDate    DateTime?   // Special 수업 일자
+  yearMonth      String      // 예: "2026-04"
+  recordedAt     DateTime    @default(now())
+}
+
+// ─────────────────────────────────────────────
+// 수업
+// ─────────────────────────────────────────────
+model Course {
+  id                  String     @id @default(cuid())
+  yearMonth           String     // "2026-04"
+  name                String
+  instructorId        String?    // Special 외부강사는 null
+  instructor          Instructor? @relation(fields: [instructorId], references: [id])
+  instructorNameText  String?    // Special 외부강사 직접 입력명
+  courseType          CourseType
+  level               String?    // "입문", "Lev 0.5", "Lev 1", ...
+  schedule            String     // "화요일 19:00" 또는 특강 일시 텍스트
+  daysCount           Int?       // Full/Half 전용: 월 진행 횟수
+  durationHours       Decimal?   // Special 전용: 총 수업 시간
+  hourlyRate          Int?       // Special 전용: 시간당 수강료
+  capacity            Int        // 최대 수강 인원 (후보 무제한)
+  tuitionFee          Int        // 수강료(학생 납부). 자동계산 or 수동 덮어쓰기.
+  tuitionFeeIsManual  Boolean    @default(false)
+  instructorFee       Int        // 강사료(강사 지급). 항상 자동계산, 수동 수정 불가.
+  description         String?
+  isActive            Boolean    @default(true)
+  createdAt           DateTime   @default(now())
+
+  registrations    Registration[]
+  enrollmentHistories EnrollmentHistory[]
+
+  @@index([yearMonth])
+  @@index([yearMonth, courseType])
+}
+
+enum CourseType {
+  FULL     // 80분
+  HALF     // 40분
+  SPECIAL  // 비정기
+}
+
+// ─────────────────────────────────────────────
+// 수강신청 기간
+// ─────────────────────────────────────────────
+model RegistrationPeriod {
+  id        String   @id @default(cuid())
+  yearMonth String   @unique // "2026-04"
+  openAt    DateTime // 수강신청 오픈 일시
+  closeAt   DateTime // 수강신청 종료 일시 (= 입금 마감일)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// 수강신청
+// ─────────────────────────────────────────────
+model Registration {
+  id                    String          @id @default(cuid())
+  userId                String
+  user                  User            @relation(fields: [userId], references: [id])
+  courseId              String
+  course                Course          @relation(fields: [courseId], references: [id])
+  status                RegistrationStatus @default(CONFIRMED)
+  waitlistOrder         Int?            // 후보 순위 (1, 2, 3...)
+  paymentStatus         PaymentStatus   @default(PENDING)
+  clubFeePaymentStatus  PaymentStatus?  // 준회원 전용 동호회비 입금 상태
+  paymentUpdatedAt      DateTime?
+  paymentUpdatedById    String?         // 처리 관리자 ID
+  registeredAt          DateTime        @default(now())
+  confirmedAt           DateTime?
+  cancelledAt           DateTime?
+
+  enrollmentHistory EnrollmentHistory?
+
+  @@unique([userId, courseId]) // 한 수업에 중복 신청 방지
+  @@index([courseId, status])
+  @@index([courseId, waitlistOrder])
+}
+
+enum RegistrationStatus {
+  CONFIRMED  // 수강 확정
+  WAITLIST   // 후보 대기
+  CANCELLED  // 취소
+}
+
+enum PaymentStatus {
+  PENDING  // 입금 대기
+  PAID     // 입금 완료
+  UNPAID   // 입금 미완료 (마감 후 미처리)
+}
+
+// ─────────────────────────────────────────────
+// 수업 등록 히스토리 (사용자용, 2년 보관)
+// ─────────────────────────────────────────────
+model EnrollmentHistory {
+  id                    String       @id @default(cuid())
+  userId                String
+  user                  User         @relation(fields: [userId], references: [id])
+  registrationId        String       @unique
+  registration          Registration @relation(fields: [registrationId], references: [id])
+  courseId              String
+  course                Course       @relation(fields: [courseId], references: [id])
+  // 등록 당시 스냅샷
+  courseName            String
+  courseType            CourseType
+  gradeAtTime           Grade        // 등록 당시 회원 등급
+  tuitionFee            Int
+  instructorFee         Int
+  clubFee               Int?         // 준회원만
+  tuitionPaymentStatus  PaymentStatus
+  clubFeePaymentStatus  PaymentStatus?
+  finalStatus           FinalStatus
+  yearMonth             String       // "2026-04" — 월별 조회용 스냅샷
+  confirmedAt           DateTime
+  archivedAt            DateTime?    // 2년 초과 시 아카이브 처리 일시
+
+  @@index([userId, confirmedAt])
+  @@index([userId, yearMonth])
+}
+
+model EnrollmentHistoryArchive {
+  id                    String      @id @default(cuid())
+  originalId            String      @unique
+  userId                String
+  registrationId        String
+  courseId              String
+  courseName            String
+  courseType            CourseType
+  gradeAtTime           Grade
+  tuitionFee            Int
+  instructorFee         Int
+  clubFee               Int?
+  tuitionPaymentStatus  PaymentStatus
+  clubFeePaymentStatus  PaymentStatus?
+  finalStatus           FinalStatus
+  yearMonth             String
+  confirmedAt           DateTime
+  archivedAt            DateTime    @default(now())
+
+  @@index([userId])
+  @@index([userId, yearMonth])
+}
+
+enum FinalStatus {
+  CONFIRMED        // 확정
+  CANCELLED        // 취소
+  PAYMENT_FAILED   // 입금미완료
+}
+
+// ─────────────────────────────────────────────
+// 시스템 설정 (key-value)
+// ─────────────────────────────────────────────
+model SystemConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+  updatedBy String?  // 처리 관리자 ID
+}
+
+// 변경 이력 로그
+model SystemConfigLog {
+  id         String   @id @default(cuid())
+  key        String
+  oldValue   String
+  newValue   String
+  updatedBy  String
+  updatedAt  DateTime @default(now())
+
+  @@index([key])
+}
+
+// ─────────────────────────────────────────────
+// 공지사항
+// ─────────────────────────────────────────────
+model Notice {
+  id          String        @id @default(cuid())
+  title       String
+  content     String
+  importance  NoticeImportance @default(NORMAL)
+  sortOrder   Int           @default(0)
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  createdById String
+}
+
+enum NoticeImportance {
+  NORMAL
+  IMPORTANT
+  URGENT
+}
+
+// ─────────────────────────────────────────────
+// 1회 쿠폰 신청
+// ─────────────────────────────────────────────
+model CouponPeriod {
+  id        String   @id @default(cuid())
+  openAt    DateTime
+  closeAt   DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model CouponApplication {
+  id           String            @id @default(cuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id])
+  couponType   CourseType        // FULL / HALF / SPECIAL
+  quantity     Int               // 1~10
+  totalAmount  Int               // quantity × 단가
+  status       CouponStatus      @default(PENDING)
+  // 유효기간: 처리 완료일로부터 90일
+  validUntil   DateTime?
+  processedAt  DateTime?
+  processedBy  String?
+  appliedAt    DateTime          @default(now())
+
+  usages CouponUsage[]
+
+  @@index([userId])
+}
+
+model CouponUsage {
+  id                  String            @id @default(cuid())
+  couponApplicationId String
+  couponApplication   CouponApplication @relation(fields: [couponApplicationId], references: [id])
+  usedAt              DateTime          @default(now())
+  note                String?
+}
+
+enum CouponStatus {
+  PENDING    // 미처리
+  PROCESSED  // 처리 완료 (쿠폰 발급)
+}
+
+// ─────────────────────────────────────────────
+// Special 수업 신청 (정규 수강신청과 독립)
+// ─────────────────────────────────────────────
+model SpecialCourse {
+  id                 String      @id @default(cuid())
+  name               String
+  instructorId       String?
+  instructor         Instructor? @relation(fields: [instructorId], references: [id])
+  instructorNameText String?
+  instructorContact  String?
+  sessionAt          DateTime
+  durationHours      Decimal
+  level              String?
+  hourlyRate         Int
+  tuitionFee         Int
+  instructorHourlyFee Int
+  instructorFee      Int
+  capacity           Int
+  description        String?
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+
+  registrations SpecialRegistration[]
+
+  @@index([sessionAt])
+}
+
+model SpecialRegistration {
+  id                 String             @id @default(cuid())
+  userId             String
+  user               User               @relation(fields: [userId], references: [id])
+  specialCourseId    String
+  specialCourse      SpecialCourse      @relation(fields: [specialCourseId], references: [id])
+  status             RegistrationStatus @default(CONFIRMED)
+  waitlistOrder      Int?
+  paymentStatus      PaymentStatus      @default(PENDING)
+  paymentUpdatedAt   DateTime?
+  paymentUpdatedById String?
+  registeredAt       DateTime           @default(now())
+  confirmedAt        DateTime?
+  cancelledAt        DateTime?
+
+  @@unique([userId, specialCourseId])
+  @@index([specialCourseId, status])
+}
+
+// ─────────────────────────────────────────────
+// 로그인 시도 기록 (rate limit용)
+// ─────────────────────────────────────────────
+model LoginAttempt {
+  id          String   @id @default(cuid())
+  username    String
+  attemptedAt DateTime @default(now())
+
+  @@index([username, attemptedAt])
+}

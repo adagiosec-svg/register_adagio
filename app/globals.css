@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=DM+Mono&display=swap');
+
+@layer base {
+  body {
+    background-color: #f4f4f0;
+    color: #1a1a18;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+
+  input, select, textarea {
+    @apply font-sans text-sm text-ink border border-black/[0.18] rounded-lg px-2.5 py-[7px] bg-white w-full outline-none;
+  }
+  input:focus, select:focus, textarea:focus {
+    @apply border-accent;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center gap-1 px-3.5 py-[7px] rounded-lg text-[13px] font-medium cursor-pointer transition-colors;
+  }
+  .btn-primary {
+    @apply btn bg-ink text-white border-none hover:bg-ink/90;
+  }
+  .btn-secondary {
+    @apply btn bg-transparent border border-black/[0.18] text-ink-secondary hover:bg-surface-1;
+  }
+  .btn-accent {
+    @apply btn bg-accent-bg text-accent border border-accent-border hover:bg-blue-100;
+  }
+  .btn-danger {
+    @apply btn bg-transparent border border-red-300 text-red-700 hover:bg-red-50;
+  }
+  .card {
+    @apply bg-white border border-black/[0.08] rounded-xl p-4 md:p-5;
+  }
+  .badge {
+    @apply inline-flex items-center gap-0.5 text-[11px] px-2 py-0.5 rounded-full font-medium;
+  }
+  .badge-green  { @apply badge bg-green-100 text-green-700; }
+  .badge-yellow { @apply badge bg-yellow-100 text-yellow-800; }
+  .badge-red    { @apply badge bg-red-50 text-red-700; }
+  .badge-blue   { @apply badge bg-accent-bg text-accent; }
+  .badge-gray   { @apply badge bg-surface-1 text-ink-muted border border-black/[0.08]; }
+  .chip-full    { @apply inline-block text-[10px] px-1.5 py-0.5 rounded font-medium bg-blue-50 text-blue-700; }
+  .chip-half    { @apply inline-block text-[10px] px-1.5 py-0.5 rounded font-medium bg-green-50 text-green-700; }
+  .chip-special { @apply inline-block text-[10px] px-1.5 py-0.5 rounded font-medium bg-purple-50 text-purple-700; }
+  .form-label { @apply block text-[11px] font-medium text-ink-secondary mb-1; }
+  .form-note  { @apply text-[10px] text-ink-muted mt-1; }
+  .section-label { @apply text-[11px] font-bold text-ink-muted tracking-wide mb-2; }
+  .table-wrap { @apply border border-black/[0.08] rounded-xl overflow-hidden; }
+  .input-text {
+    @apply font-sans text-sm text-ink border border-black/[0.18] rounded-lg px-2.5 py-[7px] bg-white w-full outline-none focus:border-accent;
+  }
+}

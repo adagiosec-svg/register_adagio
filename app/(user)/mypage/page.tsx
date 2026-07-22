@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { decryptPhone } from "@/lib/crypto";
 import { HistoryTabs } from "@/components/mypage/history-tabs";
+import { PasswordChangeForm } from "@/components/mypage/password-change-form";
 
 export const dynamic = "force-dynamic";
 
@@ -128,7 +129,9 @@ export default async function MypagePage() {
         </div>
       </div>
 
-      <h1 className="text-xl font-bold mb-4">나의 신청 내역</h1>
+      <PasswordChangeForm />
+
+      <h1 className="text-xl font-bold mb-4 mt-6">나의 신청 내역</h1>
       <HistoryTabs
         currentRegs={serializedCurrentRegs}
         specialRegs={serializedSpecial}

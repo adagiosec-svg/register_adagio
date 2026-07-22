@@ -196,7 +196,7 @@ export function TimetableGrid({ initialCourses, period }: Props) {
           style={{
             display: "grid",
             gridTemplateColumns: `3rem repeat(${days.length}, 1fr)`,
-            gridTemplateRows: `2rem repeat(${slots.length}, 40px)`,
+            gridTemplateRows: `2rem repeat(${slots.length}, 56px)`,
           }}
         >
           {/* 헤더 행 */}

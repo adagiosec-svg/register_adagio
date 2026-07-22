@@ -70,6 +70,8 @@ export function MembersTable({ initialMembers }: Props) {
   const [regsLoading, setRegsLoading] = useState<string | null>(null);
   const [cancellingRegId, setCancellingRegId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [resetPasswordId, setResetPasswordId] = useState<string | null>(null);
+  const [tempPasswords, setTempPasswords] = useState<Record<string, string>>({});
 
   async function deleteMember(id: string) {
     if (!confirm("회원을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
@@ -84,6 +86,22 @@ export function MembersTable({ initialMembers }: Props) {
       setError("네트워크 오류");
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function resetPassword(id: string) {
+    if (!confirm("비밀번호를 초기화하시겠습니까? 임시 비밀번호가 생성됩니다.")) return;
+    setResetPasswordId(id);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/members/${id}/reset-password`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "초기화 실패"); return; }
+      setTempPasswords((prev) => ({ ...prev, [id]: data.tempPassword }));
+    } catch {
+      setError("네트워크 오류");
+    } finally {
+      setResetPasswordId(null);
     }
   }
 
@@ -325,8 +343,33 @@ export function MembersTable({ initialMembers }: Props) {
                       {deletingId === m.id ? "삭제 중..." : "삭제"}
                     </button>
                   )}
+                  {m.status === "ACTIVE" && (
+                    <button
+                      onClick={() => resetPassword(m.id)}
+                      disabled={resetPasswordId === m.id}
+                      className="btn-secondary text-xs px-3 py-1.5"
+                    >
+                      {resetPasswordId === m.id ? "..." : "PW 초기화"}
+                    </button>
+                  )}
                 </div>
               </div>
+
+              {/* 임시 비밀번호 표시 */}
+              {tempPasswords[m.id] && (
+                <div className="mt-3 pt-3 border-t border-black/10 flex items-center justify-between gap-3 bg-yellow-50 -mx-4 px-4 py-3 rounded-b-xl">
+                  <div>
+                    <p className="text-[10px] font-bold text-yellow-700 mb-0.5">임시 비밀번호 (회원에게 전달 후 삭제하세요)</p>
+                    <p className="text-sm font-mono font-bold text-yellow-900 tracking-widest">{tempPasswords[m.id]}</p>
+                  </div>
+                  <button
+                    onClick={() => setTempPasswords((prev) => { const next = { ...prev }; delete next[m.id]; return next; })}
+                    className="text-[10px] text-yellow-700 hover:text-yellow-900 px-2 py-1 rounded hover:bg-yellow-100"
+                  >
+                    확인
+                  </button>
+                </div>
+              )}
 
               {/* 승인 인라인 폼 */}
               {isApproving && (

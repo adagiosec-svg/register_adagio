@@ -25,7 +25,10 @@
       "PowerShell(cd C:\\\\Users\\\\e1023\\\\workspace\\\\adagio; $env:Path = \"C:\\\\Program Files\\\\nodejs;\" + $env:Path; node node_modules\\\\typescript\\\\bin\\\\tsc --noEmit 2>&1 | Select-Object -First 50)",
       "PowerShell(& \"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"C:\\\\Users\\\\e1023\\\\workspace\\\\adagio\\\\node_modules\\\\.bin\\\\tsc\" --noEmit 2>&1)",
       "PowerShell(& \"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"C:\\\\Users\\\\e1023\\\\workspace\\\\adagio\\\\node_modules\\\\typescript\\\\bin\\\\tsc\" --noEmit 2>&1)",
-      "PowerShell(& \"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"C:\\\\Users\\\\e1023\\\\workspace\\\\adagio\\\\node_modules\\\\typescript\\\\bin\\\\tsc\" --noEmit 2>&1 | Where-Object { $_ -match \"registrations/route\" })"
+      "PowerShell(& \"C:\\\\Program Files\\\\nodejs\\\\node.exe\" \"C:\\\\Users\\\\e1023\\\\workspace\\\\adagio\\\\node_modules\\\\typescript\\\\bin\\\\tsc\" --noEmit 2>&1 | Where-Object { $_ -match \"registrations/route\" })",
+      "Bash(New-Item -ItemType Directory -Force \"C:/Users/e1023/workspace/adagio/app/api/admin/members/[id]/reset-password\")",
+      "Bash(New-Item -ItemType Directory -Force \"C:/Users/e1023/workspace/adagio/app/api/user/password\")",
+      "Bash(mkdir -p \"C:/Users/e1023/workspace/adagio/app/api/admin/members/[id]/reset-password\" *)"
     ]
   }
 }
